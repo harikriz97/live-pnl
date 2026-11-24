@@ -34,4 +34,4 @@ nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(sa
 nav button{flex:1;min-height:48px;border:0;background:none;color:var(--m);font:inherit;font-weight:650;font-size:14px;border-radius:99px}nav .on{color:#04141c;background:linear-gradient(95deg,var(--a),var(--g))}
 button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 .st.off i{background:var(--m);box-shadow:none;animation:none}
-.conn{max-width:560px;margin:18vh auto 0;text-align:center}.conn h2{margin:0 0 8px;font-size:24px}
+.logo{height:30px;width:auto;display:block}.conn{max-width:560px;margin:18vh auto 0;text-align:center}.conn h2{margin:0 0 8px;font-size:24px}
