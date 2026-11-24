@@ -101,5 +101,9 @@ async function pull(){
   } catch(e){ fail = true; status(); } finally { clearTimeout(tm); busy = false; }
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.t; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); draw(true); scrollTo(0, 0); });
-if(D) draw(true); pull(); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
+if(!C) D = null;
+let shown = false; const began = Date.now();
+function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
+setTimeout(reveal, 5500); $('#sp').onclick = reveal;                                                                  
+pull().finally(() => setTimeout(reveal, Math.max(0, (calm ? 1200 : 3900) - (Date.now() - began)))); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
