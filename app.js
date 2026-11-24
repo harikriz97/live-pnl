@@ -83,7 +83,7 @@ function draw(fresh){
   status(); if(!D) return; document.body.classList.toggle('enter', !!fresh); $('#v').innerHTML = {live, stats, hist}[tab](); if(fresh) document.querySelectorAll('#v .in, #v .k>div, #v .don, #v .note').forEach((e, i) => e.style.setProperty('--n', Math.min(i, 9))); motion();
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { per = b.dataset.p; draw(true); });
 }
-let C = null, busy = false, msg = '';
+let C = null, busy = false, shown = false;
 try { const h = location.hash.slice(1); if(h){ const o = JSON.parse(atob(h.replace(/-/g, '+').replace(/_/g, '/')));
   if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(o.u) && o.k) localStorage.setItem('cfg', JSON.stringify({u: o.u, k: o.k})); history.replaceState(null, '', location.pathname); } } catch(e){}
 try { C = JSON.parse(localStorage.getItem('cfg')); D = JSON.parse(localStorage.getItem('last')); } catch(e){}
@@ -97,12 +97,12 @@ async function pull(){
     if(j.error === 'key'){ try { localStorage.removeItem('cfg'); localStorage.removeItem('last'); } catch(e){} C = null; D = null; status(); connect('Not connected', 'This phone’s key is no longer valid. Scan the new QR code on your laptop.'); return; }
     if(!j.ok) throw 0;
     const f = !D, d = {meta: j.meta, live: j.live, curve: j.curve, trades: j.trades}, t = JSON.stringify(d), same = !f && JSON.stringify(D) === t; fail = false;
-    if(same) status(); else { D = d; try { localStorage.setItem('last', t); } catch(e){} draw(f); }
+    if(same) status(); else { D = d; try { localStorage.setItem('last', t); } catch(e){} if(shown) draw(f); }
   } catch(e){ fail = true; status(); } finally { clearTimeout(tm); busy = false; }
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.t; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); draw(true); scrollTo(0, 0); });
 if(!C) D = null;
-let shown = false; const began = Date.now();
+const began = Date.now();
 function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); setTimeout(() => { $('#sp').style.display = 'none'; }, 600); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
 setTimeout(reveal, 3000);                                                                  
 pull().finally(() => { if(calm) setTimeout(reveal, Math.max(0, 1200 - (Date.now() - began))); }); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
