@@ -106,4 +106,48 @@ const began = Date.now();
 function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); setTimeout(() => { $('#sp').style.display = 'none'; }, 600); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
 setTimeout(reveal, 3000);                                                                  
 pull().finally(() => { if(calm) setTimeout(reveal, Math.max(0, 1200 - (Date.now() - began))); }); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+const VAPID = 'BN_uMJkD4fWauufqpuUD1bWGb1SIZ1R3BVF44cm3j_9BBt3tQCDyNkkMurQwk2KzDup4Gmwwc9uAEBkIrInUD1A', can = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+let AC = null, reg = null, tto = 0;
+const TONES = {entry: [[660, 0], [880, .13], [1175, .26]], target: [[784, 0], [988, .11], [1319, .22], [1568, .33], [2093, .46]], stop: [[440, 0], [330, .2], [247, .42]], exit: [[740, 0], [554, .18]], info: [[880, 0], [880, .16]], problem: [[300, 0], [300, .22], [300, .44]]};
+function unlock(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); } catch(e){} }
+document.addEventListener('pointerdown', unlock);
+function tone(k){
+  if(!AC || AC.state !== 'running') return;
+  for(const [f, at] of TONES[k] || TONES.info){ const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + at; o.type = k === 'stop' || k === 'problem' ? 'triangle' : 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.28, t + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + .32); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + .34); }
+}
+function toast(d){
+  const el = $('#toast'); el.className = ''; el.innerHTML = `<b>${esc(d.title)}</b><span>${esc(d.body)}</span>`; void el.offsetWidth; el.className = 'on ' + (TONES[d.kind] ? d.kind : 'info');
+  tone(d.kind); if(navigator.vibrate) navigator.vibrate(d.kind === 'stop' ? [250, 90, 250] : d.kind === 'target' ? [70, 50, 70, 50, 200] : [120]); clearTimeout(tto); tto = setTimeout(() => el.className = '', 6000); if(!D || !document.hidden) pull();
+}
+$('#toast').onclick = () => { $('#toast').className = ''; };
+async function tell(o){ return (await fetch(C.u, {method: 'POST', body: JSON.stringify(Object.assign({view: C.k}, o)), credentials: 'omit', cache: 'no-store'})).json(); }
+function bytes(s){ const b = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+async function subscribe(){
+  const w = await navigator.serviceWorker.ready; let s = await w.pushManager.getSubscription();
+  if(s && localStorage.getItem('vap') !== VAPID){ await s.unsubscribe(); s = null; }
+  s = s || await w.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: bytes(VAPID)}); const j = s.toJSON(), r = await tell({sub: {endpoint: j.endpoint, keys: j.keys}});
+  if(!r.ok) throw new Error(r.error || 'failed'); localStorage.setItem('vap', VAPID); localStorage.setItem('alerts', '1');
+}
+function bell(){ const on = can && Notification.permission === 'granted' && localStorage.getItem('alerts') === '1'; $('#bell').className = on ? 'on' : ''; return on; }
+function sheet(note){
+  const on = bell(), bl = can && Notification.permission === 'denied';
+  const msg = note || (!C ? 'Scan the QR code first.' : !can ? 'This browser cannot show alerts. Install the app from Chrome.' : bl ? 'Alerts are blocked. Open Android Settings, Apps, this app, Notifications, and allow them.' : on ? 'Alerts are on. Pop-ups come even when the app is closed.' : 'Get a pop-up for every entry, target, stop and exit.');
+  let el = $('#sheet'); if(!el){ el = document.createElement('div'); el.id = 'sheet'; document.body.appendChild(el); }
+  el.innerHTML = `<div><h2>Alerts</h2><p class="m">${esc(msg)}</p>` + (C && can && !bl ? `<button class="go" id="onoff">${on ? 'Turn off' : 'Turn on alerts'}</button>` : '') + `<p class="m">Tones while the app is open. Tap to hear:</p><div class="tn">` +
+    [['entry', 'Entry'], ['target', 'Target'], ['stop', 'Stop'], ['exit', 'Exit']].map(x => `<button data-k2="${x[0]}" class="${x[0]}">${x[1]}</button>`).join('') + `</div><button class="cl" id="shut">Close</button></div>`;
+  el.className = 'on'; el.onclick = e => { if(e.target === el) el.className = ''; }; $('#shut').onclick = () => el.className = '';
+  el.querySelectorAll('[data-k2]').forEach(b => b.onclick = () => { unlock(); setTimeout(() => toast({kind: b.dataset.k2, title: {entry: '🟢 ENTRY', target: '🎯 TARGET', stop: '🔴 STOP LOSS', exit: '⚪ EXIT'}[b.dataset.k2] + ' · sample', body: 'This is how it will look.'}), 60); });
+  const b = $('#onoff'); if(b) b.onclick = async () => {
+    b.disabled = true; b.textContent = 'Please wait…';
+    try {
+      if(on){ const w = await navigator.serviceWorker.ready, s = await w.pushManager.getSubscription(); localStorage.removeItem('alerts'); if(s){ try { await tell({unsub: s.endpoint}); } catch(e){} await s.unsubscribe(); } sheet('Alerts are off.'); return; }
+      if(await Notification.requestPermission() !== 'granted') return sheet(); await subscribe(); sheet('Alerts are on. A test pop-up comes in about 2 minutes if the laptop is on.');
+    } catch(e){ sheet('Could not turn on: ' + (e.message || 'no connection') + '. Try again.'); }
+  };
+}
+$('#bell').onclick = () => sheet();
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js'); navigator.serviceWorker.addEventListener('message', e => { if(!e.data || !e.data.alert) return; const on = !!(AC && AC.state === 'running'); if(e.ports[0]) e.ports[0].postMessage(on); toast(e.data.alert); });
+  if(bell() && C) subscribe().catch(() => {});
+}
