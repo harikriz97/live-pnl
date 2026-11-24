@@ -10,7 +10,7 @@ function card(t){
   const one = !String(t.sym).includes(' + '), open = t.status === 'open';
   const size = t.u === 'share' ? pl(n(t.qty), 'share') : pl(n(t.lots), 'lot');
   const px = [`in <b>${esc(t.tin)}</b>` + (one ? ` @ <b>${n(t.entry).toFixed(2)}</b>` : '')].concat(open ? [one ? `now <b>${n(t.ltp).toFixed(2)}</b>` : ''] : [t.tout ? `out <b>${esc(t.tout)}</b>` : '', esc(t.why)]).filter(Boolean).join('  ·  ');
-  return `<div class="c in"><div class="row"><span class="nm">${esc(t.strat)}</span><span class="pn ${cl(n(t.pnl))}" data-k="${esc(t.id)}" data-v="${n(t.pnl)}">${rs(n(t.pnl))}</span></div>` +
+  return `<div class="c in${open ? " rn" : ""}"><div class="row"><span class="nm">${esc(t.strat)}</span><span class="pn ${cl(n(t.pnl))}" data-k="${esc(t.id)}" data-v="${n(t.pnl)}">${rs(n(t.pnl))}</span></div>` +
     `<div class="tags"><span class="d" style="--k:${KOL[t.desk] || '#93a0b8'}">${esc(t.desk)}</span><span>${size}</span>${t.side ? `<span>${esc(t.side)}</span>` : ''}</div>` +
     (t.sym ? `<div class="px"><b>${esc(t.sym)}</b></div>` : '') + `<div class="px">${px}</div></div>`;
 }
@@ -80,7 +80,7 @@ function motion(){
   });
 }
 function draw(fresh){
-  status(); if(!D) return; document.body.classList.toggle('enter', !!fresh); $('#v').innerHTML = {live, stats, hist}[tab](); motion();
+  status(); if(!D) return; document.body.classList.toggle('enter', !!fresh); $('#v').innerHTML = {live, stats, hist}[tab](); if(fresh) document.querySelectorAll('#v .in, #v .k>div, #v .don, #v .note').forEach((e, i) => e.style.setProperty('--n', Math.min(i, 9))); motion();
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { per = b.dataset.p; draw(true); });
 }
 let C = null, busy = false, msg = '';
@@ -103,7 +103,7 @@ async function pull(){
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.t; document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); draw(true); scrollTo(0, 0); });
 if(!C) D = null;
 let shown = false; const began = Date.now();
-function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
-setTimeout(reveal, 5500); $('#sp').onclick = reveal;                                                                  
-pull().finally(() => setTimeout(reveal, Math.max(0, (calm ? 1200 : 3900) - (Date.now() - began)))); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
+function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); setTimeout(() => { $('#sp').style.display = 'none'; }, 600); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
+setTimeout(reveal, 3000);                                                                  
+pull().finally(() => { if(calm) setTimeout(reveal, Math.max(0, 1200 - (Date.now() - began))); }); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
