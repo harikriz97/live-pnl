@@ -1,4 +1,4 @@
-const N = 'v9', F = ['./', 'app.css', 'app.js', 'manifest.webmanifest', 'brand.png', 'fi-192.png', 'fi-512.png', 'n-entry.png', 'n-target.png', 'n-stop.png', 'n-exit.png', 'n-info.png', 'n-problem.png', 'badge.png'];
+const N = 'v10', F = ['./', 'app.css', 'app.js', 'manifest.webmanifest', 'brand.png', 'fi-192.png', 'fi-512.png', 'n-entry.png', 'n-target.png', 'n-stop.png', 'n-exit.png', 'n-info.png', 'n-problem.png', 'badge.png'];
 self.addEventListener('install', e => e.waitUntil(caches.open(N).then(c => c.addAll(F)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', e => {

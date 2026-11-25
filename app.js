@@ -28,7 +28,7 @@ const head = (t, x) => `<h3>${t}<span class="${x === undefined ? '' : cl(x)}">${
 function live(){
   const M = D.meta, by = (a, b) => n(b.pnl) - n(a.pnl), o = D.live.filter(t => t.status === 'open').sort(by), c = D.live.filter(t => t.status === 'closed').sort(by);
   const lots = o.filter(t => t.u !== 'share').reduce((s, t) => s + n(t.lots), 0);
-  return hero('Today’s P&amp;L · paper', n(M.total), D.curve.map(x => n(x.total))) +
+  return hero('Today’s P&amp;L · paper · OpenAlgo price', n(M.total), D.curve.map(x => n(x.total))) +
     kpi([['Strategies running', new Set(o.map(t => t.desk + t.strat)).size], ['Lots running', lots], ['Closed today', n(M.n_closed)], ['Margin in use', M.margin == null ? '–' : '₹' + Math.round(M.margin).toLocaleString('en-IN')]]) +
     head('Running now', o.length ? S(o) : undefined) + (o.map(card).join('') || '<div class="c empty">No open trades right now.</div>') +
     (c.length ? head('Closed today', S(c)) + c.map(card).join('') : '');
@@ -51,7 +51,7 @@ function stats(){
   const by = {}; T.forEach(t => (by[t.strat] = by[t.strat] || []).push(t));
   const R = Object.keys(by).map(k => [k, by[k], S(by[k])]).sort((a, b) => b[2] - a[2]), mx = Math.max(1, ...R.map(r => Math.abs(r[2]))), dv = dy.map(x => x[1]);
   return '<div class="seg">' + [['all', 'All'], ['m', 'This month'], ['w', '7 days']].map(x => `<button data-p="${x[0]}" class="${per === x[0] ? 'on' : ''}">${x[1]}</button>`).join('') + '</div>' +
-    hero('Booked P&amp;L · paper', S(T), eq) + donut(w.length, T.length) +
+    hero('Booked P&amp;L · paper · before charges', S(T), eq) + donut(w.length, T.length) +
     kpi([['Profit factor', l.length ? (S(w) / -S(l)).toFixed(2) : '–'], ['Max drawdown (daily)', dd ? rs(dd) : '₹0', cl(dd)], ['Best day', dv.length ? rs(Math.max(...dv)) : '–', dv.length ? cl(Math.max(...dv)) : ''], ['Worst day', dv.length ? rs(Math.min(...dv)) : '–', dv.length ? cl(Math.min(...dv)) : '']]) +
     (T.length < 30 ? `<div class="note">${T.length ? 'Only ' + pl(T.length, 'trade') + ' so far' : 'No trades yet'}: too few to judge a strategy.</div>` : '') + head('By strategy') +
     (R.map(r => `<div class="c in"><div class="row"><span class="nm">${esc(r[0])}</span><span class="pn ${cl(r[2])}">${rs(r[2])}</span></div><div class="px">${pl(r[1].length, 'trade')}  ·  win ` +
