@@ -64,7 +64,7 @@ function open_(){ const p = new Date(Date.now() + 330 * 6e4), m = p.getUTCHours(
 function status(){
   const u = $('#up'), M = D ? D.meta : {}, age = M.ts ? Math.round(Date.now() / 1000 - M.ts) : 1e9, late = age > 180, at = M.ts ? `${M.day.slice(8)}/${M.day.slice(5, 7)} ${M.hm}` : '';
   u.className = 'st' + (!C || fail || (late && open_()) ? ' bad' : late ? ' off' : '');
-  u.lastChild.textContent = !C ? 'Not connected' : fail ? 'No connection' + (at ? ' · last ' + at : '') : !M.ts ? 'No data yet' : !late ? `Live · ${M.hm}` : (open_() ? 'Not updating · last ' : 'Market closed · last ') + at;
+  u.lastChild.textContent = !C ? 'Not connected' : fail ? 'No connection' + (at ? ' · last ' + at : '') : !M.ts ? 'No data yet' : !late ? 'Live · ' + new Date(M.ts * 1000).toLocaleTimeString('en-GB', {timeZone: 'Asia/Kolkata'}) : (open_() ? 'Not updating · last ' : 'Market closed · last ') + at;
 }
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches, seen = {};
 function count(el, a, b){
@@ -105,7 +105,7 @@ if(!C) D = null;
 const began = Date.now();
 function reveal(){ if(shown) return; shown = true; $('#sp').classList.add('go'); setTimeout(() => { $('#sp').style.display = 'none'; }, 600); if(D){ Object.keys(seen).forEach(k => delete seen[k]); draw(true); } else status(); }
 setTimeout(reveal, 3000);                                                                  
-pull().finally(() => { if(calm) setTimeout(reveal, Math.max(0, 1200 - (Date.now() - began))); }); setInterval(() => { if(!document.hidden) pull(); }, 30000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
+pull().finally(() => { if(calm) setTimeout(reveal, Math.max(0, 1200 - (Date.now() - began))); }); setInterval(() => { if(!document.hidden) pull(); }, 15000); document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
 const VAPID = 'BN_uMJkD4fWauufqpuUD1bWGb1SIZ1R3BVF44cm3j_9BBt3tQCDyNkkMurQwk2KzDup4Gmwwc9uAEBkIrInUD1A', can = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 let AC = null, reg = null, tto = 0;
 const TONES = {entry: [[660, 0], [880, .13], [1175, .26]], target: [[784, 0], [988, .11], [1319, .22], [1568, .33], [2093, .46]], stop: [[440, 0], [330, .2], [247, .42]], exit: [[740, 0], [554, .18]], info: [[880, 0], [880, .16]], problem: [[300, 0], [300, .22], [300, .44]]};
